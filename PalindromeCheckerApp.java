@@ -5,43 +5,52 @@ public class PalindromeCheckerApp {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("--- Recursive Palindrome Checker ---");
-        System.out.print("Enter a string: ");
+        System.out.println("--- UC10: Case-Insensitive & Space-Ignored Checker ---");
+        System.out.print("Enter your phrase: ");
         String input = scanner.nextLine();
 
-        // Normalize string before passing to recursion
-        String cleanStr = input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        // STEP 1: Normalization (The core of UC10)
+        String processed = normalizeString(input);
 
-        if (cleanStr.isEmpty()) {
-            System.out.println("Result: Empty or non-alphanumeric input.");
-        } else if (isPalindromeRecursive(cleanStr, 0, cleanStr.length() - 1)) {
-            System.out.println("Result: \"" + input + "\" is a palindrome!");
+        // STEP 2: Validation (Applying logic from previous UCs)
+        if (processed.isEmpty()) {
+            System.out.println("Invalid input: No alphanumeric characters found.");
+        } else if (isPalindrome(processed)) {
+            System.out.println("Result: Success! It is a palindrome.");
+            System.out.println("Processed form: " + processed);
         } else {
-            System.out.println("Result: \"" + input + "\" is NOT a palindrome.");
+            System.out.println("Result: Not a palindrome.");
         }
 
         scanner.close();
     }
 
     /**
-     * Recursive method to check palindrome.
-     * @param str The cleaned string.
-     * @param left Starting index.
-     * @param right Ending index.
-     * @return true if palindrome, false otherwise.
+     * UC10 Key Concept: String Preprocessing
+     * Uses Regex to strip non-essential characters.
      */
-    public static boolean isPalindromeRecursive(String str, int left, int right) {
-        // BASE CONDITION 1: If pointers cross or meet, we've checked everything.
-        if (left >= right) {
-            return true;
-        }
+    public static String normalizeString(String str) {
+        if (str == null) return "";
+        
+        // 1. Convert to lowercase to ignore case
+        // 2. Use regex [^a-zA-Z0-9] to remove all non-alphanumeric characters
+        return str.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
 
-        // BASE CONDITION 2: If characters at current pointers don't match.
-        if (str.charAt(left) != str.charAt(right)) {
-            return false;
-        }
+    /**
+     * Simple Two-Pointer logic to validate the normalized string.
+     */
+    public static boolean isPalindrome(String str) {
+        int left = 0;
+        int right = str.length() - 1;
 
-        // RECURSIVE STEP: Move inward and check the remaining substring.
-        return isPalindromeRecursive(str, left + 1, right - 1);
+        while (left < right) {
+            if (str.charAt(left) != str.charAt(right)) {
+                return false;
+            }
+            left++;
+            right--;
+        }
+        return true;
     }
 }
