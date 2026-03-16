@@ -1,56 +1,124 @@
-import java.util.Scanner;
+import java.util.*;
 
-public class PalindromeCheckerApp {
+// --- UC12: THE STRATEGY INTERFACE ---
+// This defines the "contract" for all palindrome algorithms.
+interface PalindromeStrategy {
+    boolean check(String input);
+}
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+// --- UC7: DEQUE STRATEGY ---
+class DequeStrategy implements PalindromeStrategy {
+    @Override
+    public boolean check(String input) {
+        // UC10: Normalization logic applied here
+        String clean = input.toLowerCase().replaceAll("[^a-z0-9]", "");
+        if (clean.isEmpty()) return false;
 
-        System.out.println("--- UC10: Case-Insensitive & Space-Ignored Checker ---");
-        System.out.print("Enter your phrase: ");
-        String input = scanner.nextLine();
-
-        // STEP 1: Normalization (The core of UC10)
-        String processed = normalizeString(input);
-
-        // STEP 2: Validation (Applying logic from previous UCs)
-        if (processed.isEmpty()) {
-            System.out.println("Invalid input: No alphanumeric characters found.");
-        } else if (isPalindrome(processed)) {
-            System.out.println("Result: Success! It is a palindrome.");
-            System.out.println("Processed form: " + processed);
-        } else {
-            System.out.println("Result: Not a palindrome.");
+        Deque<Character> deque = new ArrayDeque<>();
+        for (char c : clean.toCharArray()) {
+            deque.addLast(c);
         }
 
-        scanner.close();
-    }
-
-    /**
-     * UC10 Key Concept: String Preprocessing
-     * Uses Regex to strip non-essential characters.
-     */
-    public static String normalizeString(String str) {
-        if (str == null) return "";
-        
-        // 1. Convert to lowercase to ignore case
-        // 2. Use regex [^a-zA-Z0-9] to remove all non-alphanumeric characters
-        return str.toLowerCase().replaceAll("[^a-z0-9]", "");
-    }
-
-    /**
-     * Simple Two-Pointer logic to validate the normalized string.
-     */
-    public static boolean isPalindrome(String str) {
-        int left = 0;
-        int right = str.length() - 1;
-
-        while (left < right) {
-            if (str.charAt(left) != str.charAt(right)) {
+        while (deque.size() > 1) {
+            if (deque.removeFirst() != deque.removeLast()) {
                 return false;
             }
-            left++;
-            right--;
         }
         return true;
+    }
+}
+
+// --- UC9: RECURSIVE STRATEGY ---
+class RecursiveStrategy implements PalindromeStrategy {
+    @Override
+    public boolean check(String input) {
+        String clean = input.toLowerCase().replaceAll("[^a-z0-9]", "");
+        if (clean.isEmpty()) return false;
+        return isPalindrome(clean, 0, clean.length() - 1);
+    }
+
+    private boolean isPalindrome(String s, int left, int right) {
+        if (left >= right) return true;
+        if (s.charAt(left) != s.charAt(right)) return false;
+        return isPalindrome(s, left + 1, right - 1);
+    }
+}
+
+// --- UC11: STACK STRATEGY ---
+class StackStrategy implements PalindromeStrategy {
+    @Override
+    public boolean check(String input) {
+        String clean = input.toLowerCase().replaceAll("[^a-z0-9]", "");
+        if (clean.isEmpty()) return false;
+
+        Stack<Character> stack = new Stack<>();
+        for (char c : clean.toCharArray()) stack.push(c);
+        
+        for (char c : clean.toCharArray()) {
+            if (c != stack.pop()) return false;
+        }
+        return true;
+    }
+}
+
+// --- UC11: THE SERVICE (CONTEXT) ---
+class PalindromeService {
+    private PalindromeStrategy strategy;
+
+    // Set the algorithm at runtime (Dependency Injection)
+    public void setStrategy(PalindromeStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public boolean execute(String text) {
+        if (strategy == null) {
+            System.out.println("Error: No algorithm selected.");
+            return false;
+        }
+        return strategy.check(text);
+    }
+}
+
+// --- MAIN APPLICATION ---
+public class PalindromeCheckerApp {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        PalindromeService service = new PalindromeService();
+
+        System.out.println("======================================");
+        System.out.println("   ADVANCED PALINDROME CHECKER APP    ");
+        System.out.println("======================================");
+        
+        System.out.println("Choose an Algorithm:");
+        System.out.println("1. Deque (UC7 - Optimized)");
+        System.out.println("2. Recursion (UC9 - Elegant)");
+        System.out.println("3. Stack (UC11 - Reversal)");
+        System.out.print("Selection (1-3): ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Clear buffer
+
+        // Dynamic Strategy Selection (Polymorphism)
+        switch (choice) {
+            case 1 -> service.setStrategy(new DequeStrategy());
+            case 2 -> service.setStrategy(new RecursiveStrategy());
+            case 3 -> service.setStrategy(new StackStrategy());
+            default -> {
+                System.out.println("Invalid choice. Defaulting to Deque.");
+                service.setStrategy(new DequeStrategy());
+            }
+        }
+
+        System.out.print("\nEnter the string to check: ");
+        String input = scanner.nextLine();
+
+        if (service.execute(input)) {
+            System.out.println("\nSUCCESS: \"" + input + "\" is a palindrome!");
+        } else {
+            System.out.println("\nRESULT: \"" + input + "\" is NOT a palindrome.");
+        }
+
+        System.out.println("======================================");
+        scanner.close();
     }
 }
