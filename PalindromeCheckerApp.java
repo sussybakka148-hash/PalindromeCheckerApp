@@ -1,48 +1,77 @@
 import java.util.Scanner;
-import java.util.Deque;
-import java.util.ArrayDeque;
+
+class Node {
+    char data;
+    Node next;
+
+    Node(char data) {
+        this.data = data;
+        this.next = null;
+    }
+}
 
 public class PalindromeCheckerApp {
 
     public static void main(String[] args) {
-
         Scanner scanner = new Scanner(System.in);
-
-        System.out.print("Enter a string to check: ");
+        System.out.print("Enter a string (Linked List Check): ");
         String input = scanner.nextLine();
 
-        if (checkPalindromeUsingDeque(input)) {
+        if (isPalindromeLinkedList(input)) {
             System.out.println("The string is a palindrome.");
         } else {
             System.out.println("The string is not a palindrome.");
         }
-
         scanner.close();
     }
 
-    public static boolean checkPalindromeUsingDeque(String str) {
+    public static boolean isPalindromeLinkedList(String str) {
+        String cleanStr = str.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        if (cleanStr.isEmpty()) return true;
 
-        // Remove spaces and convert to lowercase
-        String cleanStr = str.replaceAll("\\s+", "").toLowerCase();
-
-        Deque<Character> deque = new ArrayDeque<>();
-
-        // Insert characters into deque
-        for (char c : cleanStr.toCharArray()) {
-            deque.addLast(c);
+        // Step 1: Convert String to Singly Linked List
+        Node head = new Node(cleanStr.charAt(0));
+        Node current = head;
+        for (int i = 1; i < cleanStr.length(); i++) {
+            current.next = new Node(cleanStr.charAt(i));
+            current = current.next;
         }
 
-        // Compare front and rear
-        while (deque.size() > 1) {
+        // Step 2: Find the middle using Fast and Slow pointers
+        Node slow = head;
+        Node fast = head;
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
 
-            char front = deque.removeFirst();
-            char rear = deque.removeLast();
+        // Step 3: Reverse the second half of the list
+        Node secondHalfHead = reverseList(slow);
+        Node firstHalfHead = head;
 
-            if (front != rear) {
+        // Step 4: Compare the two halves
+        Node tempSecond = secondHalfHead;
+        while (tempSecond != null) {
+            if (firstHalfHead.data != tempSecond.data) {
                 return false;
             }
+            firstHalfHead = firstHalfHead.next;
+            tempSecond = tempSecond.next;
         }
 
         return true;
+    }
+
+    // Helper method for In-Place Reversal
+    private static Node reverseList(Node head) {
+        Node prev = null;
+        Node current = head;
+        while (current != null) {
+            Node nextNode = current.next;
+            current.next = prev;
+            prev = current;
+            current = nextNode;
+        }
+        return prev;
     }
 }
