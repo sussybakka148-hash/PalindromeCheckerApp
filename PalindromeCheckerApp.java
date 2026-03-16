@@ -1,42 +1,42 @@
 import java.util.*;
 
-// --- UC12: THE STRATEGY INTERFACE ---
-// This defines the "contract" for all palindrome algorithms.
+/**
+ * PalindromeStrategy: The interface for our Strategy Pattern (UC12).
+ */
 interface PalindromeStrategy {
     boolean check(String input);
+    String getName();
 }
 
-// --- UC7: DEQUE STRATEGY ---
+/**
+ * UC7: Optimized Deque Strategy. 
+ * High performance, O(n) time, O(n) space.
+ */
 class DequeStrategy implements PalindromeStrategy {
-    @Override
+    public String getName() { return "Deque (Double-Ended)"; }
     public boolean check(String input) {
-        // UC10: Normalization logic applied here
         String clean = input.toLowerCase().replaceAll("[^a-z0-9]", "");
         if (clean.isEmpty()) return false;
-
         Deque<Character> deque = new ArrayDeque<>();
-        for (char c : clean.toCharArray()) {
-            deque.addLast(c);
-        }
-
+        for (char c : clean.toCharArray()) deque.addLast(c);
         while (deque.size() > 1) {
-            if (deque.removeFirst() != deque.removeLast()) {
-                return false;
-            }
+            if (deque.removeFirst() != deque.removeLast()) return false;
         }
         return true;
     }
 }
 
-// --- UC9: RECURSIVE STRATEGY ---
+/**
+ * UC9: Recursive Strategy.
+ * Elegant, mathematical approach using the Call Stack.
+ */
 class RecursiveStrategy implements PalindromeStrategy {
-    @Override
+    public String getName() { return "Recursive (Stack-Based)"; }
     public boolean check(String input) {
         String clean = input.toLowerCase().replaceAll("[^a-z0-9]", "");
         if (clean.isEmpty()) return false;
         return isPalindrome(clean, 0, clean.length() - 1);
     }
-
     private boolean isPalindrome(String s, int left, int right) {
         if (left >= right) return true;
         if (s.charAt(left) != s.charAt(right)) return false;
@@ -44,16 +44,17 @@ class RecursiveStrategy implements PalindromeStrategy {
     }
 }
 
-// --- UC11: STACK STRATEGY ---
+/**
+ * UC11: Stack Strategy.
+ * Demonstrates LIFO (Last-In-First-Out) for string reversal.
+ */
 class StackStrategy implements PalindromeStrategy {
-    @Override
+    public String getName() { return "Stack (Reversal)"; }
     public boolean check(String input) {
         String clean = input.toLowerCase().replaceAll("[^a-z0-9]", "");
         if (clean.isEmpty()) return false;
-
         Stack<Character> stack = new Stack<>();
         for (char c : clean.toCharArray()) stack.push(c);
-        
         for (char c : clean.toCharArray()) {
             if (c != stack.pop()) return false;
         }
@@ -61,64 +62,61 @@ class StackStrategy implements PalindromeStrategy {
     }
 }
 
-// --- UC11: THE SERVICE (CONTEXT) ---
+/**
+ * PalindromeService: The Orchestrator.
+ * Handles benchmarking and algorithm execution (UC11 & UC13).
+ */
 class PalindromeService {
-    private PalindromeStrategy strategy;
+    private final List<PalindromeStrategy> strategies = new ArrayList<>();
 
-    // Set the algorithm at runtime (Dependency Injection)
-    public void setStrategy(PalindromeStrategy strategy) {
-        this.strategy = strategy;
-    }
+    public void registerStrategy(PalindromeStrategy s) { strategies.add(s); }
 
-    public boolean execute(String text) {
-        if (strategy == null) {
-            System.out.println("Error: No algorithm selected.");
-            return false;
+    public void runBenchmark(String text) {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.printf("%-25s | %-12s | %-15s\n", "ALGORITHM", "RESULT", "TIME (ns)");
+        System.out.println("-".repeat(60));
+
+        for (PalindromeStrategy strategy : strategies) {
+            long startTime = System.nanoTime();
+            boolean isPalindrome = strategy.check(text);
+            long endTime = System.nanoTime();
+            
+            long duration = endTime - startTime;
+            String resultText = isPalindrome ? "✓ PALINDROME" : "✗ NO";
+            
+            System.out.printf("%-25s | %-12s | %-15d\n", 
+                strategy.getName(), resultText, duration);
         }
-        return strategy.check(text);
+        System.out.println("=".repeat(60));
     }
 }
 
-// --- MAIN APPLICATION ---
+/**
+ * Main App Class
+ */
 public class PalindromeCheckerApp {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         PalindromeService service = new PalindromeService();
 
-        System.out.println("======================================");
-        System.out.println("   ADVANCED PALINDROME CHECKER APP    ");
-        System.out.println("======================================");
-        
-        System.out.println("Choose an Algorithm:");
-        System.out.println("1. Deque (UC7 - Optimized)");
-        System.out.println("2. Recursion (UC9 - Elegant)");
-        System.out.println("3. Stack (UC11 - Reversal)");
-        System.out.print("Selection (1-3): ");
-        
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Clear buffer
+        // Registering all algorithmic approaches
+        service.registerStrategy(new DequeStrategy());
+        service.registerStrategy(new RecursiveStrategy());
+        service.registerStrategy(new StackStrategy());
 
-        // Dynamic Strategy Selection (Polymorphism)
-        switch (choice) {
-            case 1 -> service.setStrategy(new DequeStrategy());
-            case 2 -> service.setStrategy(new RecursiveStrategy());
-            case 3 -> service.setStrategy(new StackStrategy());
-            default -> {
-                System.out.println("Invalid choice. Defaulting to Deque.");
-                service.setStrategy(new DequeStrategy());
-            }
-        }
-
-        System.out.print("\nEnter the string to check: ");
+        System.out.println("💎 PALINDROME ENGINE v2.0 - PERFORMANCE EDITION 💎");
+        System.out.println("Objective: UC7 to UC13 Validation & Benchmarking");
+        
+        System.out.print("\n👉 Enter text to analyze: ");
         String input = scanner.nextLine();
 
-        if (service.execute(input)) {
-            System.out.println("\nSUCCESS: \"" + input + "\" is a palindrome!");
+        if (input.trim().isEmpty()) {
+            System.out.println("Error: Input cannot be empty.");
         } else {
-            System.out.println("\nRESULT: \"" + input + "\" is NOT a palindrome.");
+            service.runBenchmark(input);
         }
 
-        System.out.println("======================================");
+        System.out.println("\nProcess complete. All algorithms executed successfully.");
         scanner.close();
     }
 }
